@@ -1,0 +1,1344 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Системен Архитект — Упражнение 8. клас</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --surface: #1e293b;
+    --surface-light: #273549;
+    --border: #334155;
+    --primary: #38bdf8;
+    --primary-dark: #0284c7;
+    --accent: #818cf8;
+    --success: #22c55e;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --text: #f1f5f9;
+    --text-muted: #94a3b8;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.55;
+    min-height: 100vh;
+    padding-bottom: 40px;
+  }
+
+  header {
+    background: rgba(30, 41, 59, 0.95);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 20px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(8px);
+  }
+  .header-inner {
+    max-width: 1060px;
+    margin: 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--primary);
+  }
+  .hud {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    font-size: 0.92rem;
+  }
+  .hud-pill {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 5px 12px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .hud-pill strong { color: var(--primary); }
+
+  .progress-wrap {
+    max-width: 1060px;
+    margin: 14px auto 0;
+    padding: 0 20px;
+  }
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+  }
+  .step {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 10px;
+    font-size: 0.8rem;
+    text-align: center;
+    color: var(--text-muted);
+    transition: all 0.25s;
+  }
+  .step.active {
+    border-color: var(--primary);
+    color: var(--text);
+    background: rgba(56, 189, 248, 0.12);
+    font-weight: 600;
+  }
+  .step.done {
+    border-color: var(--success);
+    color: var(--success);
+    background: rgba(34, 197, 94, 0.1);
+  }
+
+  main {
+    max-width: 1060px;
+    margin: 22px auto;
+    padding: 0 20px;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+  }
+  h1 { font-size: 1.7rem; margin-bottom: 10px; color: #fff; }
+  h2 { font-size: 1.35rem; margin-bottom: 12px; color: var(--primary); }
+  h3 { font-size: 1.08rem; margin-bottom: 10px; color: #e2e8f0; }
+  p.subtitle { color: var(--text-muted); margin-bottom: 18px; }
+
+  .btn {
+    background: var(--primary);
+    color: #0f172a;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: transform 0.1s, background 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn:hover { background: #7dd3fc; }
+  .btn:active { transform: scale(0.98); }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .btn-secondary {
+    background: var(--surface-light);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { background: #334155; }
+  .btn-success { background: var(--success); color: #052e16; }
+  .btn-success:hover { background: #4ade80; }
+
+  input[type="text"], select {
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    width: 100%;
+    outline: none;
+  }
+  input[type="text"]:focus, select:focus { border-color: var(--primary); }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 14px;
+    margin: 18px 0;
+  }
+  @media (max-width: 650px) { .form-grid { grid-template-columns: 1fr; } }
+
+  .match-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    margin-top: 14px;
+  }
+  @media (max-width: 720px) { .match-container { grid-template-columns: 1fr; } }
+
+  .match-item {
+    background: var(--bg);
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+  }
+  .match-item:hover { border-color: var(--primary); }
+  .match-item.selected { border-color: var(--warning); background: rgba(245, 158, 11, 0.12); }
+  .match-item.paired { border-color: var(--accent); background: rgba(129, 140, 248, 0.12); }
+  .match-item.correct { border-color: var(--success); background: rgba(34, 197, 94, 0.14); }
+  .match-item.wrong { border-color: var(--danger); background: rgba(239, 68, 68, 0.14); }
+
+  .badge {
+    font-size: 0.78rem;
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: var(--surface-light);
+    color: var(--primary);
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .scenario-box {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .options-grid {
+    display: grid;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .option-btn {
+    text-align: left;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 11px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.93rem;
+    transition: all 0.15s;
+  }
+  .option-btn:hover { border-color: var(--primary); background: var(--surface-light); }
+  .option-btn.selected { border-color: var(--primary); background: rgba(56, 189, 248, 0.18); font-weight: 600; }
+  .option-btn.correct { border-color: var(--success); background: rgba(34, 197, 94, 0.2); }
+  .option-btn.wrong { border-color: var(--danger); background: rgba(239, 68, 68, 0.2); }
+
+  .feedback {
+    margin-top: 12px;
+    padding: 12px 15px;
+    border-radius: 8px;
+    font-size: 0.92rem;
+    display: none;
+  }
+  .feedback.show { display: block; }
+  .feedback.ok { background: rgba(34, 197, 94, 0.15); border: 1px solid var(--success); color: #bbf7d0; }
+  .feedback.err { background: rgba(239, 68, 68, 0.15); border: 1px solid var(--danger); color: #fecaca; }
+  .feedback.info { background: rgba(56, 189, 248, 0.15); border: 1px solid var(--primary); color: #bae6fd; }
+
+  .client-brief {
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.12), rgba(129, 140, 248, 0.12));
+    border: 1px solid var(--primary-dark);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 18px;
+  }
+  .req-list {
+    margin: 10px 0 0 18px;
+    font-size: 0.92rem;
+    color: #e2e8f0;
+  }
+  .builder-grid {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 20px;
+  }
+  @media (max-width: 820px) { .builder-grid { grid-template-columns: 1fr; } }
+
+  .part-row {
+    margin-bottom: 14px;
+  }
+  .part-row label {
+    display: block;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--primary);
+    margin-bottom: 5px;
+  }
+  .summary-panel {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    height: fit-content;
+  }
+  .stat-line {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px dashed var(--border);
+    font-size: 0.93rem;
+  }
+  .budget-bar {
+    height: 10px;
+    background: var(--surface-light);
+    border-radius: 99px;
+    overflow: hidden;
+    margin: 10px 0;
+  }
+  .budget-fill {
+    height: 100%;
+    background: var(--primary);
+    transition: width 0.3s, background 0.3s;
+  }
+
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.72);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    padding: 20px;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    max-width: 680px;
+    width: 100%;
+    max-height: 82vh;
+    overflow-y: auto;
+    padding: 22px;
+  }
+  .glossary-item {
+    border-bottom: 1px solid var(--border);
+    padding: 10px 0;
+  }
+  .glossary-item:last-child { border-bottom: none; }
+  .glossary-item strong { color: var(--primary); }
+
+  .cert-box {
+    background: linear-gradient(145deg, #0f172a, #1e293b);
+    border: 2px solid var(--primary);
+    border-radius: 16px;
+    padding: 28px;
+    text-align: center;
+  }
+  .grade-circle {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    border: 4px solid var(--success);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 18px auto;
+    background: rgba(34, 197, 94, 0.1);
+  }
+  .grade-circle span { font-size: 2rem; font-weight: 800; color: #fff; line-height: 1; }
+  .grade-circle small { font-size: 0.78rem; color: var(--success); margin-top: 4px; }
+
+  .breakdown-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 18px 0;
+    text-align: left;
+    font-size: 0.93rem;
+  }
+  .breakdown-table th, .breakdown-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .breakdown-table th { color: var(--text-muted); font-weight: 600; }
+
+  .hidden { display: none !important; }
+  .actions-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 20px;
+  }
+
+  @media print {
+    body { background: #fff; color: #000; }
+    header, .progress-wrap, .no-print { display: none !important; }
+    .card, .cert-box { border: 2px solid #000; background: #fff !important; color: #000 !important; box-shadow: none; }
+    .grade-circle { border-color: #000; color: #000; }
+    .grade-circle span, .grade-circle small, h1, h2 { color: #000 !important; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="brand">💻 Системен Архитект • 8. клас</div>
+    <div class="hud">
+      <div class="hud-pill" id="hudStudent">👤 <span>Гост</span></div>
+      <div class="hud-pill">⏱️ <strong id="hudTimer">00:00</strong></div>
+      <div class="hud-pill">🏆 <strong id="hudScore">0</strong> / 100 т.</div>
+      <button type="button" class="btn btn-secondary" style="padding: 5px 12px; font-size: 0.85rem;" onclick="toggleGlossary(true)">📖 Справочник</button>
+    </div>
+  </div>
+</header>
+
+<div class="progress-wrap">
+  <div class="steps" id="progressSteps">
+    <div class="step active">1. Хардуер</div>
+    <div class="step">2. Конфигуратор</div>
+    <div class="step">3. ОС и Мобилни</div>
+    <div class="step">4. Финален тест</div>
+    <div class="step">5. Резултат</div>
+  </div>
+</div>
+
+<main>
+  <section id="screenStart" class="card">
+    <h1>Добре дошли в Академията за Системни Архитекти!</h1>
+    <p class="subtitle">
+      Днешното упражнение обобщава знанията ви за <strong>съвременните компютърни системи, операционните системи и мобилните устройства</strong>.
+      Очакват ви 4 практически мисии (около 35–40 минути работа). Максимален резултат: <strong>100 точки</strong>.
+    </p>
+
+    <div class="scenario-box">
+      <h3>Какво ще правите днес?</h3>
+      <ul class="req-list">
+        <li><strong>Мисия 1 (25 т.):</strong> Свързване на компоненти с характеристиките им и диагностика на реални хардуерни повреди.</li>
+        <li><strong>Мисия 2 (30 т.):</strong> Сглобяване на 2 компютърни конфигурации по бюджет и техническа съвместимост.</li>
+        <li><strong>Мисия 3 (25 т.):</strong> Избор на подходяща операционна система и разпознаване на мобилни сензори.</li>
+        <li><strong>Мисия 4 (20 т.):</strong> Финален тест с 10 въпроса за сертификат.</li>
+      </ul>
+    </div>
+
+    <div class="form-grid">
+      <div>
+        <label style="font-size:0.88rem; color:var(--text-muted);">Име и фамилия на ученика:</label>
+        <input type="text" id="studentName" placeholder="Напр. Георги Петров">
+      </div>
+      <div>
+        <label style="font-size:0.88rem; color:var(--text-muted);">Клас:</label>
+        <select id="studentClass">
+          <option value="8А">8А клас</option>
+          <option value="8Б">8Б клас</option>
+          <option value="8В">8В клас</option>
+          <option value="8Г">8Г клас</option>
+          <option value="8Д">8Д клас</option>
+        </select>
+      </div>
+    </div>
+    <div id="startError" class="feedback err">Моля, въведете име и фамилия (поне 3 символа), за да започнете упражнението.</div>
+
+    <div class="actions-row">
+      <span style="color:var(--text-muted); font-size:0.88rem;">💡 По всяко време можете да отваряте бутона „📖 Справочник“ горе вдясно.</span>
+      <button type="button" class="btn" onclick="startExercise()">Започни упражнението ▶</button>
+    </div>
+  </section>
+
+  <section id="screenM1" class="hidden">
+    <div class="card">
+      <h2>Мисия 1: Хардуерен детектив (25 точки)</h2>
+      <p class="subtitle">Част А: Свържете всеки компонент от лявата колона с правилното описание и мерна единица вдясно (10 т.). Кликнете първо на компонент, а след това на описание.</p>
+
+      <div class="match-container">
+        <div id="matchLeft"></div>
+        <div id="matchRight"></div>
+      </div>
+
+      <div id="m1aFeedback" class="feedback"></div>
+      <div class="actions-row">
+        <button type="button" class="btn btn-secondary" onclick="resetPairs()">Изчисти връзките</button>
+        <button type="button" class="btn" id="btnCheckM1a" onclick="checkM1a()">Провери Част А</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Част Б: Открий причината за проблема (15 точки)</h3>
+      <p class="subtitle">Прочетете трите сигнала от клиенти в сервиза и изберете най-вероятната техническа причина.</p>
+      <div id="troubleshootList"></div>
+      <div id="m1bFeedback" class="feedback"></div>
+      <div class="actions-row">
+        <button type="button" class="btn" id="btnCheckM1b" onclick="checkM1b()">Провери Част Б</button>
+        <button type="button" class="btn btn-success hidden" id="btnNextM1" onclick="goToScreen(2)">Към Мисия 2 ▶</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="screenM2" class="hidden">
+    <div class="card">
+      <h2>Мисия 2: Сглоби компютър по поръчка (30 точки)</h2>
+      <p class="subtitle">Влизате в ролята на хардуерен архитект. Сглобете последователно <strong>2 конфигурации</strong>. Внимавайте за бюджета, сокета на дънната платка, типа памет (DDR4/DDR5), видеокартата и захранването!</p>
+
+      <div style="display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap;">
+        <span class="badge" id="buildTab1" style="padding:7px 14px; font-size:0.9rem; border:1px solid var(--primary);">Поръчка 1/2: Ученически и програмиране</span>
+        <span class="badge" id="buildTab2" style="padding:7px 14px; font-size:0.9rem; opacity:0.5;">Поръчка 2/2: Видеомонтаж и 3D/Гейминг</span>
+      </div>
+
+      <div class="client-brief" id="clientBrief"></div>
+
+      <div class="builder-grid">
+        <div id="partsForm"></div>
+
+        <div class="summary-panel">
+          <h3>📊 Технически параметри</h3>
+          <div class="stat-line"><span>Цена на частите:</span> <strong id="calcPrice">0 €</strong></div>
+          <div class="stat-line"><span>Максимален бюджет:</span> <strong id="calcBudget">0 €</strong></div>
+          <div class="budget-bar"><div class="budget-fill" id="budgetFill" style="width:0%"></div></div>
+
+          <div class="stat-line"><span>Сокет CPU / Дъно:</span> <strong id="calcSocket">-</strong></div>
+          <div class="stat-line"><span>Тип RAM (Дъно / Памет):</span> <strong id="calcRam">-</strong></div>
+          <div class="stat-line"><span>Консумация (CPU+GPU+80W):</span> <strong id="calcPower">0 W</strong></div>
+          <div class="stat-line"><span>Препоръчително PSU (+120W):</span> <strong id="calcRecPower">0 W</strong></div>
+          <div class="stat-line"><span>Избрано захранване:</span> <strong id="calcPsu">0 W</strong></div>
+
+          <div id="buildFeedback" class="feedback" style="margin-top:14px;"></div>
+
+          <div style="margin-top:16px; display:flex; flex-direction:column; gap:10px;">
+            <button type="button" class="btn" id="btnVerifyBuild" onclick="verifyCurrentBuild()">🔧 Провери и сглоби (Опит <span id="attemptNum">1</span>)</button>
+            <button type="button" class="btn btn-success hidden" id="btnNextBuild" onclick="advanceBuild()">Продължи ▶</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="screenM3" class="hidden">
+    <div class="card">
+      <h2>Мисия 3: Операционни системи и мобилни устройства (25 точки)</h2>
+      <p class="subtitle">Част А: Изберете най-подходящото решение за операционни системи (10 т.).</p>
+      <div id="osQuestions"></div>
+      <div id="m3aFeedback" class="feedback"></div>
+      <div class="actions-row">
+        <span></span>
+        <button type="button" class="btn" id="btnCheckM3a" onclick="checkM3a()">Провери Част А</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Част Б: Кой сензор или мобилна технология работи тук? (15 точки)</h3>
+      <p class="subtitle">Определете технологията зад всяка ежедневна ситуация със смартфон.</p>
+      <div id="mobileQuestions"></div>
+      <div id="m3bFeedback" class="feedback"></div>
+      <div class="actions-row">
+        <button type="button" class="btn" id="btnCheckM3b" onclick="checkM3b()">Провери Част Б</button>
+        <button type="button" class="btn btn-success hidden" id="btnNextM3" onclick="goToScreen(4)">Към Финалния тест ▶</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="screenM4" class="hidden">
+    <div class="card">
+      <h2>Мисия 4: Финален тест „Системен Експерт“ (20 точки)</h2>
+      <p class="subtitle">10 въпроса по 2 точки, обединяващи хардуер, ОС, мобилни технологии и мрежови интерфейси.</p>
+      <div id="finalQuizList"></div>
+      <div id="m4Feedback" class="feedback"></div>
+      <div class="actions-row">
+        <button type="button" class="btn" id="btnCheckM4" onclick="checkM4()">Предай финалния тест</button>
+        <button type="button" class="btn btn-success hidden" id="btnFinishAll" onclick="showFinalReport()">Виж финалния сертификат 🏆</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="screenFinal" class="hidden">
+    <div class="card cert-box">
+      <div style="font-size:0.9rem; color:var(--primary); letter-spacing:1.5px; text-transform:uppercase;">Удостоверение за завършено упражнение • ИТ 8. клас</div>
+      <h1 id="certName" style="margin-top:8px;">Ученик</h1>
+      <p style="color:var(--text-muted);">Клас: <strong id="certClass">-</strong> • Изминало време: <strong id="certTime">00:00</strong></p>
+
+      <div class="grade-circle">
+        <span id="certTotal">0</span>
+        <small>от 100 т.</small>
+      </div>
+      <div id="certGradeText" style="font-size:1.25rem; font-weight:700; margin-bottom:14px;">Оценка: -</div>
+
+      <table class="breakdown-table">
+        <thead>
+          <tr><th>Мисия</th><th>Макс. точки</th><th>Получени</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Мисия 1: Хардуерен детектив и диагностика</td><td>25 т.</td><td id="repM1">0 т.</td></tr>
+          <tr><td>Мисия 2: PC Конфигуратор по поръчка</td><td>30 т.</td><td id="repM2">0 т.</td></tr>
+          <tr><td>Мисия 3: Операционни системи и мобилни сензори</td><td>25 т.</td><td id="repM3">0 т.</td></tr>
+          <tr><td>Мисия 4: Финален тест „Системен Експерт“</td><td>20 т.</td><td id="repM4">0 т.</td></tr>
+        </tbody>
+      </table>
+
+      <div class="actions-row no-print" style="justify-content:center;">
+        <button type="button" class="btn" onclick="window.print()">🖨️ Принтирай / Запази PDF</button>
+        <button type="button" class="btn btn-secondary" onclick="copyReport()">📋 Копирай кратък отчет за учителя</button>
+      </div>
+      <div id="copyFeedback" class="feedback ok no-print" style="margin-top:12px;">Отчетът е копиран! Можете да го поставите (Ctrl+V) в съобщение до учителя.</div>
+    </div>
+  </section>
+</main>
+
+<div class="modal-backdrop" id="glossaryModal" onclick="if(event.target===this) toggleGlossary(false)">
+  <div class="modal">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <h2>📖 Кратък справочник</h2>
+      <button type="button" class="btn btn-secondary" style="padding:5px 12px;" onclick="toggleGlossary(false)">✕ Затвори</button>
+    </div>
+    <div class="glossary-item"><strong>Сокет (Socket):</strong> Гнездото на дънната платка за процесора (напр. AM4, AM5, LGA1700). Процесорът и дъното трябва да имат еднакъв сокет!</div>
+    <div class="glossary-item"><strong>DDR4 / DDR5:</strong> Поколения оперативна памет (RAM). Не са взаимнозаменяеми – дънната платка поддържа само единия стандарт.</div>
+    <div class="glossary-item"><strong>NVMe SSD vs HDD:</strong> SSD използва флаш памет и е многократно по-бързо от механичния HDD диск, което ускорява зареждането на ОС.</div>
+    <div class="glossary-item"><strong>PSU (Захранващ блок):</strong> Измерва се във ватове (W). Трябва да покрива консумацията на CPU + GPU + останалите части с резерв (поне 120 W) за стабилност.</div>
+    <div class="glossary-item"><strong>Драйвер (Driver):</strong> Системен софтуер, който превежда командите между операционната система и даден хардуерен компонент.</div>
+    <div class="glossary-item"><strong>SoC (System on a Chip):</strong> Интегриран чип при мобилните устройства, който събира CPU, GPU, NPU и модеми на една силициева подложка.</div>
+    <div class="glossary-item"><strong>NFC / Жироскоп / Proximity:</strong> NFC е за безконтактни плащания; жироскопът/акселерометърът засичат ориентация; сензорът за близост гаси екрана до ухото.</div>
+  </div>
+</div>
+
+<script>
+const state = {
+  name: "",
+  cls: "",
+  seconds: 0,
+  timerId: null,
+  scores: { m1a: 0, m1b: 0, m2: 0, m3a: 0, m3b: 0, m4: 0 },
+  done: { m1a: false, m1b: false, m3a: false, m3b: false, m4: false }
+};
+
+function totalScore() {
+  return Object.values(state.scores).reduce((a, b) => a + b, 0);
+}
+function updateHUD() {
+  document.getElementById("hudScore").textContent = totalScore();
+}
+function formatTime(s) {
+  const m = String(Math.floor(s / 60)).padStart(2, "0");
+  const sec = String(s % 60).padStart(2, "0");
+  return `${m}:${sec}`;
+}
+function toggleGlossary(open) {
+  document.getElementById("glossaryModal").classList.toggle("open", open);
+}
+
+function startExercise() {
+  const nameInput = document.getElementById("studentName");
+  const name = nameInput.value.trim();
+  const cls = document.getElementById("studentClass").value;
+  if (name.length < 3) {
+    document.getElementById("startError").classList.add("show");
+    nameInput.focus();
+    return;
+  }
+  document.getElementById("startError").classList.remove("show");
+  state.name = name;
+  state.cls = cls;
+  document.getElementById("hudStudent").innerHTML = `👤 <span>${name} (${cls})</span>`;
+  state.timerId = setInterval(() => {
+    state.seconds++;
+    document.getElementById("hudTimer").textContent = formatTime(state.seconds);
+  }, 1000);
+
+  initMission1();
+  goToScreen(1);
+}
+
+function goToScreen(num) {
+  ["screenStart", "screenM1", "screenM2", "screenM3", "screenM4", "screenFinal"].forEach(id => {
+    document.getElementById(id).classList.add("hidden");
+  });
+  const map = { 1: "screenM1", 2: "screenM2", 3: "screenM3", 4: "screenM4", 5: "screenFinal" };
+  document.getElementById(map[num]).classList.remove("hidden");
+
+  const steps = document.querySelectorAll("#progressSteps .step");
+  steps.forEach((el, idx) => {
+    el.classList.remove("active", "done");
+    if (idx + 1 < num) el.classList.add("done");
+    else if (idx + 1 === num) el.classList.add("active");
+  });
+
+  if (num === 2 && !m2Initialized) initMission2();
+  if (num === 3 && !m3Initialized) initMission3();
+  if (num === 4 && !m4Initialized) initMission4();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+const m1PairsData = [
+  { id: "cpu", left: "Процесор (CPU)", right: "Изпълнява инструкции; измерва се в GHz и брой ядра" },
+  { id: "ram", left: "Оперативна памет (RAM)", right: "Временна енергозависима памет (GB, DDR4/DDR5)" },
+  { id: "ssd", left: "Твърдотелен диск (NVMe SSD)", right: "Бързо енергонезависимо съхранение без движещи части (MB/s)" },
+  { id: "gpu", left: "Видеокарта (GPU)", right: "Обработва 3D графика и видео; има собствена VRAM памет" },
+  { id: "psu", left: "Захранващ блок (PSU)", right: "Преобразува променливото напрежение и захранва частите (W)" }
+];
+
+let selectedLeft = null;
+let userPairs = {};
+let shuffledRight = [];
+
+const m1TroubleshootData = [
+  {
+    q: "1. Компютърът работи нормално при писане в Word, но 5 минути след пускане на тежка 3D игра се изключва внезапно и напълно.",
+    opts: [
+      "Бавна интернет връзка към сървъра на играта",
+      "Недостатъчна мощност на захранването (PSU) или критично прегряване под товар",
+      "Стар монитор с ниска честота на опресняване (60 Hz)",
+      "Грешна файлова система на USB флашката"
+    ],
+    ans: 1,
+    exp: "При тежък товар процесорът и видеокартата консумират максимум енергия и отделят топлина – слабо PSU или лошо охлаждане води до защитно изключване."
+  },
+  {
+    q: "2. Нов лаптоп с процесор Intel Core i5 има инсталиран Windows, но зарежда системата за 3 минути и програмите отварят изключително бавно.",
+    opts: [
+      "Операционната система е инсталирана на стар механичен HDD вместо на SSD",
+      "Клавиатурата няма кирилица",
+      "Недостатъчна резолюция на уеб камерата",
+      "Липсва HDMI кабел към телевизор"
+    ],
+    ans: 0,
+    exp: "Механичните HDD дискове са основното тясно място (bottleneck) за скоростта на ОС. Смяната с SSD прави компютъра пъти по-бърз."
+  },
+  {
+    q: "3. Ученик отваря 20 раздела в браузъра, Discord и програма за монтаж. Системата започва силно да насича, а дискът показва 100% заетост.",
+    opts: [
+      "Изтощена батерия на безжичната мишка",
+      "Недостатъчна оперативна памет (напр. само 4 GB RAM) – системата ползва диска за swap",
+      "Твърде мощна видеокарта",
+      "Изключен Bluetooth адаптер"
+    ],
+    ans: 1,
+    exp: "Когато RAM паметта не стига, ОС прехвърля данни на диска (виртуална памет / paging), което драстично забавя работата."
+  }
+];
+let m1bAnswers = {};
+
+function initMission1() {
+  shuffledRight = [...m1PairsData].sort(() => Math.random() - 0.5);
+  renderPairs();
+
+  const list = document.getElementById("troubleshootList");
+  list.innerHTML = m1TroubleshootData.map((item, idx) => `
+    <div class="scenario-box">
+      <strong>${item.q}</strong>
+      <div class="options-grid">
+        ${item.opts.map((opt, oIdx) => `
+          <button type="button" class="option-btn" id="m1b_${idx}_${oIdx}" onclick="selectM1b(${idx}, ${oIdx})">${opt}</button>
+        `).join("")}
+      </div>
+      <div class="feedback" id="m1b_exp_${idx}"></div>
+    </div>
+  `).join("");
+}
+
+function renderPairs() {
+  const leftDiv = document.getElementById("matchLeft");
+  const rightDiv = document.getElementById("matchRight");
+
+  const pairLabels = {};
+  Object.keys(userPairs).forEach((lId, i) => {
+    pairLabels[lId] = i + 1;
+    pairLabels[userPairs[lId]] = i + 1;
+  });
+
+  leftDiv.innerHTML = m1PairsData.map(p => {
+    const isSel = selectedLeft === p.id;
+    const isPaired = userPairs[p.id] !== undefined;
+    return `
+      <div class="match-item ${isSel ? 'selected' : ''} ${isPaired ? 'paired' : ''}" id="left_${p.id}" onclick="clickLeft('${p.id}')">
+        <span>${p.left}</span>
+        ${isPaired ? `<span class="badge">Връзка #${pairLabels[p.id]}</span>` : '<span class="badge" style="opacity:0.4;">избери</span>'}
+      </div>`;
+  }).join("");
+
+  rightDiv.innerHTML = shuffledRight.map(p => {
+    const pairedLeft = Object.keys(userPairs).find(k => userPairs[k] === p.id);
+    return `
+      <div class="match-item ${pairedLeft ? 'paired' : ''}" id="right_${p.id}" onclick="clickRight('${p.id}')">
+        <span style="font-size:0.9rem;">${p.right}</span>
+        ${pairedLeft ? `<span class="badge">#${pairLabels[pairedLeft]}</span>` : ''}
+      </div>`;
+  }).join("");
+}
+
+function clickLeft(id) {
+  if (state.done.m1a) return;
+  selectedLeft = (selectedLeft === id) ? null : id;
+  renderPairs();
+}
+function clickRight(rId) {
+  if (state.done.m1a || !selectedLeft) return;
+  Object.keys(userPairs).forEach(k => { if (userPairs[k] === rId) delete userPairs[k]; });
+  userPairs[selectedLeft] = rId;
+  selectedLeft = null;
+  renderPairs();
+}
+function resetPairs() {
+  if (state.done.m1a) return;
+  userPairs = {};
+  selectedLeft = null;
+  renderPairs();
+}
+
+function checkM1a() {
+  if (state.done.m1a) return;
+  if (Object.keys(userPairs).length < m1PairsData.length) {
+    const fb = document.getElementById("m1aFeedback");
+    fb.className = "feedback show err";
+    fb.textContent = "Свържете всички 5 компонента преди проверка.";
+    return;
+  }
+  state.done.m1a = true;
+  let pts = 0;
+  m1PairsData.forEach(p => {
+    const lEl = document.getElementById("left_" + p.id);
+    const rEl = document.getElementById("right_" + userPairs[p.id]);
+    if (userPairs[p.id] === p.id) {
+      pts += 2;
+      lEl.classList.add("correct");
+      rEl.classList.add("correct");
+    } else {
+      lEl.classList.add("wrong");
+      rEl.classList.add("wrong");
+    }
+  });
+  state.scores.m1a = pts;
+  updateHUD();
+  const fb = document.getElementById("m1aFeedback");
+  fb.className = `feedback show ${pts === 10 ? 'ok' : 'info'}`;
+  fb.textContent = `Резултат от Част А: ${pts} от 10 точки.`;
+  document.getElementById("btnCheckM1a").disabled = true;
+  checkM1Complete();
+}
+
+function selectM1b(qIdx, oIdx) {
+  if (state.done.m1b) return;
+  m1bAnswers[qIdx] = oIdx;
+  m1TroubleshootData[qIdx].opts.forEach((_, i) => {
+    document.getElementById(`m1b_${qIdx}_${i}`).classList.toggle("selected", i === oIdx);
+  });
+}
+
+function checkM1b() {
+  if (state.done.m1b) return;
+  if (Object.keys(m1bAnswers).length < m1TroubleshootData.length) {
+    const fb = document.getElementById("m1bFeedback");
+    fb.className = "feedback show err";
+    fb.textContent = "Отговорете на всички 3 казуса преди проверка.";
+    return;
+  }
+  state.done.m1b = true;
+  let pts = 0;
+  m1TroubleshootData.forEach((item, idx) => {
+    const chosen = m1bAnswers[idx];
+    const expEl = document.getElementById(`m1b_exp_${idx}`);
+    document.getElementById(`m1b_${idx}_${item.ans}`).classList.add("correct");
+    if (chosen === item.ans) {
+      pts += 5;
+      expEl.className = "feedback show ok";
+      expEl.textContent = "✔ Вярно! " + item.exp;
+    } else {
+      document.getElementById(`m1b_${idx}_${chosen}`).classList.add("wrong");
+      expEl.className = "feedback show err";
+      expEl.textContent = "✘ Грешно. " + item.exp;
+    }
+  });
+  state.scores.m1b = pts;
+  updateHUD();
+  document.getElementById("btnCheckM1b").disabled = true;
+  const fb = document.getElementById("m1bFeedback");
+  fb.className = `feedback show ${pts === 15 ? 'ok' : 'info'}`;
+  fb.textContent = `Резултат от Част Б: ${pts} от 15 точки.`;
+  checkM1Complete();
+}
+
+function checkM1Complete() {
+  if (state.done.m1a && state.done.m1b) {
+    document.getElementById("btnNextM1").classList.remove("hidden");
+  }
+}
+
+const catalog = {
+  cpu: [
+    { id: "r5_5600", name: "AMD Ryzen 5 5600 (6 ядра, сокет AM4, 65W, без вградено видео)", socket: "AM4", ddr: "DDR4", watts: 65, cores: 6, igpu: false, price: 115 },
+    { id: "i5_12400", name: "Intel Core i5-12400 (6 ядра, сокет LGA1700, 65W, с вградено видео)", socket: "LGA1700", ddr: "BOTH", watts: 65, cores: 6, igpu: true, price: 145 },
+    { id: "r5_7600", name: "AMD Ryzen 5 7600 (6 ядра, сокет AM5, 65W, с вградено видео)", socket: "AM5", ddr: "DDR5", watts: 65, cores: 6, igpu: true, price: 195 },
+    { id: "r7_7700x", name: "AMD Ryzen 7 7700X (8 ядра, сокет AM5, 105W, с вградено видео)", socket: "AM5", ddr: "DDR5", watts: 105, cores: 8, igpu: true, price: 295 },
+    { id: "i7_14700k", name: "Intel Core i7-14700K (20 ядра, сокет LGA1700, 220W, с вградено видео)", socket: "LGA1700", ddr: "BOTH", watts: 220, cores: 20, igpu: true, price: 370 }
+  ],
+  mobo: [
+    { id: "b550", name: "MSI B550M PRO-VDH (Сокет AM4, памет DDR4)", socket: "AM4", ddr: "DDR4", price: 95 },
+    { id: "b760_d4", name: "ASUS PRIME B760M-K D4 (Сокет LGA1700, памет DDR4)", socket: "LGA1700", ddr: "DDR4", price: 105 },
+    { id: "b650", name: "Gigabyte B650M DS3H (Сокет AM5, памет DDR5)", socket: "AM5", ddr: "DDR5", price: 145 },
+    { id: "b760_d5", name: "ASUS TUF GAMING B760-PLUS (Сокет LGA1700, памет DDR5)", socket: "LGA1700", ddr: "DDR5", price: 175 }
+  ],
+  ram: [
+    { id: "8_d4", name: "8 GB DDR4 (3200 MHz)", ddr: "DDR4", gb: 8, price: 25 },
+    { id: "16_d4", name: "16 GB DDR4 (2x8 GB, 3200 MHz)", ddr: "DDR4", gb: 16, price: 45 },
+    { id: "16_d5", name: "16 GB DDR5 (2x8 GB, 5600 MHz)", ddr: "DDR5", gb: 16, price: 65 },
+    { id: "32_d5", name: "32 GB DDR5 (2x16 GB, 6000 MHz)", ddr: "DDR5", gb: 32, price: 115 }
+  ],
+  storage: [
+    { id: "hdd_1tb", name: "1 TB HDD (Механичен твърд диск, 7200 RPM)", type: "HDD", gb: 1000, price: 50 },
+    { id: "ssd_500", name: "500 GB NVMe SSD (PCIe 4.0, висока скорост)", type: "SSD", gb: 500, price: 48 },
+    { id: "ssd_1tb", name: "1 TB NVMe SSD (PCIe 4.0, висока скорост)", type: "SSD", gb: 1000, price: 82 },
+    { id: "ssd_2tb", name: "2 TB NVMe SSD (PCIe 4.0, висока скорост)", type: "SSD", gb: 2000, price: 145 }
+  ],
+  gpu: [
+    { id: "none", name: "Без отделна видеокарта (ползва вградената в процесора)", vram: 0, watts: 0, dedicated: false, price: 0 },
+    { id: "rtx3050", name: "NVIDIA GeForce RTX 3050 (6 GB VRAM, 70W)", vram: 6, watts: 70, dedicated: true, price: 185 },
+    { id: "rtx4060", name: "NVIDIA GeForce RTX 4060 (8 GB VRAM, 115W)", vram: 8, watts: 115, dedicated: true, price: 305 },
+    { id: "rx7700", name: "AMD Radeon RX 7700 XT (12 GB VRAM, 245W)", vram: 12, watts: 245, dedicated: true, price: 410 },
+    { id: "rtx4070s", name: "NVIDIA GeForce RTX 4070 Super (12 GB VRAM, 220W)", vram: 12, watts: 220, dedicated: true, price: 610 }
+  ],
+  psu: [
+    { id: "450w", name: "450W Bronze Захранване", watts: 450, price: 45 },
+    { id: "550w", name: "550W Bronze Захранване", watts: 550, price: 60 },
+    { id: "650w", name: "650W Gold Захранване", watts: 650, price: 85 },
+    { id: "850w", name: "850W Gold Захранване", watts: 850, price: 125 }
+  ]
+};
+
+const clientOrders = [
+  {
+    title: "Поръчка 1: „Ученически компютър за програмиране и мултитаскинг“",
+    client: "Клиент: Мария (8. клас) — учи Python/C#, държи много отворени табове, прави презентации.",
+    budget: 750,
+    reqs: [
+      "Максимален бюджет: <strong>750 €</strong>",
+      "Поне <strong>16 GB RAM</strong> оперативна памет",
+      "Бърз <strong>NVMe SSD диск</strong> с капацитет поне <strong>500 GB</strong> (не механичен HDD!)",
+      "Системата трябва да има видео изход (ако изберете без отделна видеокарта, процесорът задължително трябва да има вградено видео!)",
+      "Пълна съвместимост (сокет, DDR стандарт, захранване >= консумация + 120W резерв)"
+    ],
+    checkExtra: (b) => {
+      const errs = [];
+      if (b.ram.gb < 16) errs.push("Клиентът изисква поне 16 GB RAM.");
+      if (b.storage.type !== "SSD" || b.storage.gb < 500) errs.push("Нужен е бърз NVMe SSD (поне 500 GB), не бавен HDD.");
+      return errs;
+    }
+  },
+  {
+    title: "Поръчка 2: „Професионален 4K видеомонтаж, 3D и Гейминг“",
+    client: "Клиент: Алекс — монтира 4K видеоклипове, учи Blender и играе модерни игри.",
+    budget: 1450,
+    reqs: [
+      "Максимален бюджет: <strong>1450 €</strong>",
+      "Мощен процесор с <strong>поне 8 ядра</strong>",
+      "Поне <strong>32 GB RAM</strong> оперативна памет",
+      "Отделна видеокарта с <strong>поне 8 GB VRAM</strong>",
+      "Бърз <strong>NVMe SSD диск поне 1 TB</strong>",
+      "Пълна съвместимост (сокет, DDR стандарт, захранване >= консумация + 120W резерв)"
+    ],
+    checkExtra: (b) => {
+      const errs = [];
+      if (b.cpu.cores < 8) errs.push("Процесорът трябва да има поне 8 ядра за видеомонтаж.");
+      if (b.ram.gb < 32) errs.push("За 4K монтаж са нужни поне 32 GB RAM.");
+      if (!b.gpu.dedicated || b.gpu.vram < 8) errs.push("Нужна е отделна видеокарта с поне 8 GB VRAM.");
+      if (b.storage.type !== "SSD" || b.storage.gb < 1000) errs.push("Нужен е NVMe SSD с капацитет поне 1 TB.");
+      return errs;
+    }
+  }
+];
+
+let m2Initialized = false;
+let currentOrderIdx = 0;
+let buildAttempts = 1;
+let buildSolved = false;
+
+function initMission2() {
+  m2Initialized = true;
+  renderOrderUI();
+}
+
+function renderOrderUI() {
+  const order = clientOrders[currentOrderIdx];
+  buildAttempts = 1;
+  buildSolved = false;
+  document.getElementById("attemptNum").textContent = "1";
+  document.getElementById("btnVerifyBuild").disabled = false;
+  document.getElementById("btnNextBuild").classList.add("hidden");
+  document.getElementById("buildFeedback").className = "feedback";
+
+  document.getElementById("buildTab1").style.opacity = currentOrderIdx === 0 ? "1" : "0.5";
+  document.getElementById("buildTab2").style.opacity = currentOrderIdx === 1 ? "1" : "0.5";
+  document.getElementById("buildTab2").style.border = currentOrderIdx === 1 ? "1px solid var(--primary)" : "none";
+
+  document.getElementById("clientBrief").innerHTML = `
+    <h3>${order.title}</h3>
+    <p style="font-size:0.94rem; margin-bottom:6px;">${order.client}</p>
+    <ul class="req-list">${order.reqs.map(r => `<li>${r}</li>`).join("")}</ul>
+  `;
+
+  const labels = {
+    cpu: "1. Процесор (CPU)",
+    mobo: "2. Дънна платка (Motherboard)",
+    ram: "3. Оперативна памет (RAM)",
+    storage: "4. Диск за съхранение (Storage)",
+    gpu: "5. Видеокарта (GPU)",
+    psu: "6. Захранващ блок (PSU)"
+  };
+
+  document.getElementById("partsForm").innerHTML = Object.keys(labels).map(cat => `
+    <div class="part-row">
+      <label>${labels[cat]}</label>
+      <select id="sel_${cat}" onchange="recalcBuild()">
+        ${catalog[cat].map(item => `<option value="${item.id}">${item.name} — ${item.price} €</option>`).join("")}
+      </select>
+    </div>
+  `).join("");
+
+  recalcBuild();
+}
+
+function getSelectedBuild() {
+  const b = {};
+  Object.keys(catalog).forEach(cat => {
+    const val = document.getElementById("sel_" + cat).value;
+    b[cat] = catalog[cat].find(x => x.id === val);
+  });
+  return b;
+}
+
+function recalcBuild() {
+  const order = clientOrders[currentOrderIdx];
+  const b = getSelectedBuild();
+  const price = b.cpu.price + b.mobo.price + b.ram.price + b.storage.price + b.gpu.price + b.psu.price;
+  const pct = Math.min(100, Math.round((price / order.budget) * 100));
+  const power = b.cpu.watts + b.gpu.watts + 80;
+  const recPower = power + 120;
+
+  document.getElementById("calcPrice").textContent = `${price} €`;
+  document.getElementById("calcPrice").style.color = price > order.budget ? "var(--danger)" : "var(--success)";
+  document.getElementById("calcBudget").textContent = `${order.budget} €`;
+
+  const fill = document.getElementById("budgetFill");
+  fill.style.width = pct + "%";
+  fill.style.background = price > order.budget ? "var(--danger)" : "var(--primary)";
+
+  document.getElementById("calcSocket").textContent = `${b.cpu.socket} / ${b.mobo.socket}`;
+  document.getElementById("calcRam").textContent = `${b.mobo.ddr} / ${b.ram.ddr}`;
+  document.getElementById("calcPower").textContent = `${power} W`;
+  document.getElementById("calcRecPower").textContent = `${recPower} W`;
+  document.getElementById("calcPsu").textContent = `${b.psu.watts} W`;
+}
+
+function verifyCurrentBuild() {
+  if (buildSolved) return;
+  const order = clientOrders[currentOrderIdx];
+  const b = getSelectedBuild();
+  const price = b.cpu.price + b.mobo.price + b.ram.price + b.storage.price + b.gpu.price + b.psu.price;
+  const power = b.cpu.watts + b.gpu.watts + 80;
+  const recPower = power + 120;
+
+  const errs = [];
+  if (price > order.budget) errs.push(`Надхвърлен бюджет (${price} € > ${order.budget} €).`);
+  if (b.cpu.socket !== b.mobo.socket) errs.push(`Несъвместим сокет: Процесорът е ${b.cpu.socket}, а дъното е ${b.mobo.socket}!`);
+  if (b.mobo.ddr !== b.ram.ddr) errs.push(`Несъвместима памет: Дъното изисква ${b.mobo.ddr}, а сте избрали ${b.ram.ddr}!`);
+  if (!b.gpu.dedicated && !b.cpu.igpu) errs.push(`Системата няма да изведе картина: Избраният процесор (${b.cpu.name.split(" (")[0]}) няма вградено видео, а не сте добавили отделна видеокарта!`);
+  if (b.psu.watts < recPower) errs.push(`Слабо захранване: ${b.psu.watts} W е под препоръчителните ${recPower} W!`);
+
+  errs.push(...order.checkExtra(b));
+
+  const fb = document.getElementById("buildFeedback");
+  if (errs.length === 0) {
+    buildSolved = true;
+    const pts = buildAttempts === 1 ? 15 : (buildAttempts === 2 ? 12 : 9);
+    state.scores.m2 += pts;
+    updateHUD();
+    fb.className = "feedback show ok";
+    fb.innerHTML = `✔ <strong>Отлично! Конфигурацията е 100% съвместима и отговаря на изискванията!</strong> (+${pts} точки)`;
+    document.getElementById("btnVerifyBuild").disabled = true;
+    const nextBtn = document.getElementById("btnNextBuild");
+    nextBtn.classList.remove("hidden");
+    nextBtn.textContent = currentOrderIdx === 0 ? "Към Поръчка 2 ▶" : "Към Мисия 3 ▶";
+  } else {
+    buildAttempts++;
+    document.getElementById("attemptNum").textContent = buildAttempts;
+    fb.className = "feedback show err";
+    fb.innerHTML = `<strong>✘ Открити проблеми (${errs.length}):</strong><ul style="margin:6px 0 0 18px;">${errs.map(e => `<li>${e}</li>`).join("")}</ul><div style="margin-top:6px; font-size:0.85rem;">Коригирайте частите и опитайте отново!</div>`;
+  }
+}
+
+function advanceBuild() {
+  if (currentOrderIdx === 0) {
+    currentOrderIdx = 1;
+    renderOrderUI();
+  } else {
+    goToScreen(3);
+  }
+}
+
+const osData = [
+  {
+    q: "1. Гейминг компютър, който трябва да поддържа най-новите PC игри и DirectX 12.",
+    opts: ["Linux Ubuntu", "Windows 11", "iOS", "Android"],
+    ans: 1,
+    exp: "Windows остава стандарт за PC игри с най-широка поддръжка от производители и DirectX."
+  },
+  {
+    q: "2. Училищен сървър или стар компютър, за който се търси безплатна ОС с отворен код и висока сигурност.",
+    opts: ["macOS", "Windows 11 Pro", "Linux (напр. Ubuntu / Debian)", "watchOS"],
+    ans: 2,
+    exp: "Linux е с отворен код (Open Source), безплатна и много лека/сигурна за сървъри и по-стари машини."
+  },
+  {
+    q: "3. Студио за видеомонтаж, работещо с Final Cut Pro и синхронизация с iPhone/iPad.",
+    opts: ["macOS", "Linux Mint", "FreeDOS", "Android"],
+    ans: 0,
+    exp: "macOS е операционната система на Apple Mac компютрите и единствената, поддържаща Final Cut Pro."
+  },
+  {
+    q: "4. Каква е ролята на системния софтуер, наречен „драйвер“ (driver)?",
+    opts: [
+      "Почиства вируси от браузъра",
+      "Позволява на операционната система да комуникира правилно с конкретно хардуерно устройство",
+      "Увеличава капацитета на твърдия диск",
+      "Свързва компютъра директно към социални мрежи"
+    ],
+    ans: 1,
+    exp: "Без драйвер ОС не знае как да управлява специфичните функции на видеокартата, принтера или звуковата карта."
+  }
+];
+
+const mobileData = [
+  {
+    q: "1. Доближавате телефона до ПОС терминал в магазина, за да платите безконтактно.",
+    opts: ["GPS модул", "NFC (Near Field Communication)", "Сензор за близост", "Жироскоп"],
+    ans: 1
+  },
+  {
+    q: "2. Завъртате смартфона хоризонтално и видеото автоматично се обръща на цял екран.",
+    opts: ["NFC чип", "Барометър", "Акселерометър и жироскоп", "Магнитометър (компас)"],
+    ans: 2
+  },
+  {
+    q: "3. По време на телефонен разговор доближавате телефона до ухото си и екранът изгасва.",
+    opts: ["Сензор за близост (Proximity sensor)", "Термометър", "5G антена", "Пръстов отпечатък"],
+    ans: 0
+  },
+  {
+    q: "4. Използвате навигация в планината без мобилен интернет (с изтеглена офлайн карта).",
+    opts: ["Bluetooth", "GPS / GNSS сателитен приемник", "NFC", "Сензор за светлина"],
+    ans: 1
+  },
+  {
+    q: "5. Екранът автоматично увеличава яркостта си, когато излезете на силно слънце.",
+    opts: ["Сензор за околна светлина (Ambient Light Sensor)", "Жироскоп", "Микрофон", "SoC модем"],
+    ans: 0
+  }
+];
+
+let m3Initialized = false;
+let m3aAns = {}, m3bAns = {};
+
+function initMission3() {
+  m3Initialized = true;
+  document.getElementById("osQuestions").innerHTML = osData.map((item, idx) => `
+    <div class="scenario-box">
+      <strong>${item.q}</strong>
+      <div class="options-grid">
+        ${item.opts.map((o, oIdx) => `<button type="button" class="option-btn" id="m3a_${idx}_${oIdx}" onclick="selM3a(${idx}, ${oIdx})">${o}</button>`).join("")}
+      </div>
+      <div class="feedback" id="m3a_exp_${idx}"></div>
+    </div>
+  `).join("");
+
+  document.getElementById("mobileQuestions").innerHTML = mobileData.map((item, idx) => `
+    <div class="scenario-box">
+      <strong>${item.q}</strong>
+      <div class="options-grid" style="grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));">
+        ${item.opts.map((o, oIdx) => `<button type="button" class="option-btn" id="m3b_${idx}_${oIdx}" onclick="selM3b(${idx}, ${oIdx})">${o}</button>`).join("")}
+      </div>
+    </div>
+  `).join("");
+}
+
+function selM3a(q, o) {
+  if (state.done.m3a) return;
+  m3aAns[q] = o;
+  osData[q].opts.forEach((_, i) => document.getElementById(`m3a_${q}_${i}`).classList.toggle("selected", i === o));
+}
+function selM3b(q, o) {
+  if (state.done.m3b) return;
+  m3bAns[q] = o;
+  mobileData[q].opts.forEach((_, i) => document.getElementById(`m3b_${q}_${i}`).classList.toggle("selected", i === o));
+}
+
+function checkM3a() {
+  if (state.done.m3a) return;
+  if (Object.keys(m3aAns).length < osData.length) {
+    const fb = document.getElementById("m3aFeedback");
+    fb.className = "feedback show err";
+    fb.textContent = "Отговорете на всички въпроси в Част А.";
+    return;
+  }
+  state.done.m3a = true;
+  let pts = 0;
+  osData.forEach((item, idx) => {
+    const ch = m3aAns[idx];
+    const exp = document.getElementById(`m3a_exp_${idx}`);
+    document.getElementById(`m3a_${idx}_${item.ans}`).classList.add("correct");
+    if (ch === item.ans) {
+      pts += 2.5;
+      exp.className = "feedback show ok";
+      exp.textContent = "✔ Вярно! " + item.exp;
+    } else {
+      document.getElementById(`m3a_${idx}_${ch}`).classList.add("wrong");
+      exp.className = "feedback show err";
+      exp.textContent = "✘ Грешно. " + item.exp;
+    }
+  });
+  state.scores.m3a = pts;
+  updateHUD();
+  document.getElementById("btnCheckM3a").disabled = true;
+  const fb = document.getElementById("m3aFeedback");
+  fb.className = `feedback show ${pts === 10 ? 'ok' : 'info'}`;
+  fb.textContent = `Резултат от Част А: ${pts} от 10 точки.`;
+  if (state.done.m3b) document.getElementById("btnNextM3").classList.remove("hidden");
+}
+
+function checkM3b() {
+  if (state.done.m3b) return;
+  if (Object.keys(m3bAns).length < mobileData.length) {
+    const fb = document.getElementById("m3bFeedback");
+    fb.className = "feedback show err";
+    fb.textContent = "Отговорете на всички 5 ситуации в Част Б.";
+    return;
+  }
+  state.done.m3b = true;
+  let pts = 0;
+  mobileData.forEach((item, idx) => {
+    const ch = m3bAns[idx];
+    document.getElementById(`m3b_${idx}_${item.ans}`).classList.add("correct");
+    if (ch === item.ans) pts += 3;
+    else document.getElementById(`m3b_${idx}_${ch}`).classList.add("wrong");
+  });
+  state.scores.m3b = pts;
+  updateHUD();
+  document.getElementById("btnCheckM3b").disabled = true;
+  const fb = document.getElementById("m3bFeedback");
+  fb.className = `feedback show ${pts === 15 ? 'ok' : 'info'}`;
+  fb.textContent = `Резултат от Част Б: ${pts} от 15 точки.`;
+  if (state.done.m3a) document.getElementById("btnNextM3").classList.remove("hidden");
+}
+
+const quizData = [
+  { q: "1. Коя памет губи информацията си веднага след изключване на захранването?", opts: ["NVMe SSD", "RAM (Оперативна памет)", "ROM / BIOS чип", "SD карта"], ans: 1 },
+  { q: "2. Какво означава съкращението SoC (System on a Chip) при смартфоните?", opts: ["Батерия с бързо зареждане", "Всички основни модули (CPU, GPU, модем) в един общ чип", "Защитно стъкло на екрана", "Външна карта памет"], ans: 1 },
+  { q: "3. Кой кабелен порт се използва за директно свързване към локална компютърна мрежа (LAN)?", opts: ["HDMI", "DisplayPort", "RJ-45 (Ethernet)", "3.5 mm Audio Jack"], ans: 2 },
+  { q: "4. Колко мегабайта (MB) приблизително съдържат 4 гигабайта (GB) (в двоична система 1 GB = 1024 MB)?", opts: ["400 MB", "2048 MB", "4096 MB", "8192 MB"], ans: 2 },
+  { q: "5. Какво се случва първо при натискане на бутона за включване на компютъра?", opts: ["Стартира браузърът", "BIOS/UEFI извършва самотест (POST) и предава управлението на ОС", "Захранването се изключва", "Форматира се дискът"], ans: 1 },
+  { q: "6. Кой тип дисплей при телефоните постига „истинско черно“ и пести батерия при тъмен режим, защото изключва отделните пиксели?", opts: ["IPS LCD", "OLED / AMOLED", "CRT", "TN матрица"], ans: 1 },
+  { q: "7. Коя е основната файлова система, използвана стандартно от съвременните версии на Windows за системния дял?", opts: ["NTFS", "ext4", "APFS", "MP3"], ans: 0 },
+  { q: "8. Какво представлява „кеш паметта“ (Cache L1/L2/L3) на процесора?", opts: ["Място за снимки и музика", "Свръхбърза памет вътре в процесора за най-често ползваните данни", "Батерия за часовника на дънната платка", "Вид охлаждащ вентилатор"], ans: 1 },
+  { q: "9. Кой клавишен shortcut в Windows отваря директно Диспечера на задачите (Task Manager) за следене на CPU и RAM?", opts: ["Ctrl + C", "Ctrl + Shift + Esc", "Alt + F4", "Win + L"], ans: 1 },
+  { q: "10. Коя безжична технология има най-малък обхват и енергийна консумация (идеална за слушалки и смарт часовници)?", opts: ["5G мобилна мрежа", "Wi-Fi 6", "Bluetooth", "Сателитен интернет"], ans: 2 }
+];
+
+let m4Initialized = false;
+let m4Ans = {};
+
+function initMission4() {
+  m4Initialized = true;
+  document.getElementById("finalQuizList").innerHTML = quizData.map((item, idx) => `
+    <div class="scenario-box">
+      <strong>${item.q}</strong>
+      <div class="options-grid">
+        ${item.opts.map((o, oIdx) => `<button type="button" class="option-btn" id="m4_${idx}_${oIdx}" onclick="selM4(${idx}, ${oIdx})">${o}</button>`).join("")}
+      </div>
+    </div>
+  `).join("");
+}
+
+function selM4(q, o) {
+  if (state.done.m4) return;
+  m4Ans[q] = o;
+  quizData[q].opts.forEach((_, i) => document.getElementById(`m4_${q}_${i}`).classList.toggle("selected", i === o));
+}
+
+function checkM4() {
+  if (state.done.m4) return;
+  if (Object.keys(m4Ans).length < quizData.length) {
+    const fb = document.getElementById("m4Feedback");
+    fb.className = "feedback show err";
+    fb.textContent = `Моля, отговорете на всички 10 въпроса (отговорени: ${Object.keys(m4Ans).length}/10).`;
+    return;
+  }
+  state.done.m4 = true;
+  clearInterval(state.timerId);
+  let pts = 0;
+  quizData.forEach((item, idx) => {
+    const ch = m4Ans[idx];
+    document.getElementById(`m4_${idx}_${item.ans}`).classList.add("correct");
+    if (ch === item.ans) pts += 2;
+    else document.getElementById(`m4_${idx}_${ch}`).classList.add("wrong");
+  });
+  state.scores.m4 = pts;
+  updateHUD();
+  document.getElementById("btnCheckM4").disabled = true;
+  const fb = document.getElementById("m4Feedback");
+  fb.className = `feedback show ${pts >= 16 ? 'ok' : 'info'}`;
+  fb.textContent = `Резултат от финалния тест: ${pts} от 20 точки.`;
+  document.getElementById("btnFinishAll").classList.remove("hidden");
+}
+
+function getGrade(pts) {
+  if (pts >= 89) return "Отличен (6)";
+  if (pts >= 76) return "Много добър (5)";
+  if (pts >= 63) return "Добър (4)";
+  if (pts >= 50) return "Среден (3)";
+  return "Слаб (2)";
+}
+
+function showFinalReport() {
+  const total = totalScore();
+  document.getElementById("certName").textContent = state.name;
+  document.getElementById("certClass").textContent = state.cls;
+  document.getElementById("certTime").textContent = formatTime(state.seconds);
+  document.getElementById("certTotal").textContent = total;
+  document.getElementById("certGradeText").textContent = "Ориентировъчна оценка: " + getGrade(total);
+
+  document.getElementById("repM1").textContent = (state.scores.m1a + state.scores.m1b) + " т.";
+  document.getElementById("repM2").textContent = state.scores.m2 + " т.";
+  document.getElementById("repM3").textContent = (state.scores.m3a + state.scores.m3b) + " т.";
+  document.getElementById("repM4").textContent = state.scores.m4 + " т.";
+
+  goToScreen(5);
+}
+
+function copyReport() {
+  const total = totalScore();
+  const txt = `ОТЧЕТ ПО ИТ (8. клас) — Компютърни системи\nУченик: ${state.name} (${state.cls})\nВреме: ${formatTime(state.seconds)}\nМисия 1 (Хардуер): ${state.scores.m1a + state.scores.m1b}/25 т.\nМисия 2 (Конфигуратор): ${state.scores.m2}/30 т.\nМисия 3 (ОС и Мобилни): ${state.scores.m3a + state.scores.m3b}/25 т.\nМисия 4 (Тест): ${state.scores.m4}/20 т.\nОБЩО: ${total}/100 т. | Оценка: ${getGrade(total)}`;
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(txt).then(() => {
+      document.getElementById("copyFeedback").classList.add("show");
+    }).catch(() => fallbackCopy(txt));
+  } else {
+    fallbackCopy(txt);
+  }
+}
+
+function fallbackCopy(txt) {
+  const ta = document.createElement("textarea");
+  ta.value = txt;
+  document.body.appendChild(ta);
+  ta.select();
+  try {
+    document.execCommand("copy");
+    document.getElementById("copyFeedback").classList.add("show");
+  } catch (e) {}
+  document.body.removeChild(ta);
+}
+</script>
+</body>
+</html>
